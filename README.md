@@ -1,5 +1,11 @@
 # Mara Google Analytics Downloader
 
+<span style="color: darkred">
+
+***ATTENTION:** The supported APIs do not support Google Analytics 4 (GA4).*
+
+</span>
+
 This package contains a google analytics downloader to be used with the mara ETL framework:
 
 - Download a google analytics request to a database table
