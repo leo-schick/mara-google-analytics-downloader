@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.4 (2022-09-13)
+
+- add option to filter on segments with paraemter `--segments`. Only supported for the Google Analytics API.
+
 ## 1.1.3 (2022-01-03)
 
 - fix support responses with more than 1000 rows from Google Analytics API by adding support for paged responses

@@ -19,6 +19,7 @@ class DownloadGoogleAnalyticsFlatTable(pipelines.Command):
                  end_date: str = 'today',
                  dimensions: t.Iterable[str] = None,
                  filters: str = None,
+                 segments: t.Iterable[str] = None,
                  add_view_id_column: bool = False,
                  use_flask_command: bool = False,
                  fail_on_no_data: bool = False
@@ -35,6 +36,7 @@ class DownloadGoogleAnalyticsFlatTable(pipelines.Command):
             metrics: t.Iterable[str], the metrics to receive
             dimensions: t.Iterable[str] = None, the dimensions to receive
             filters: str=None, a filter string to be used in the query
+            segments: t.Iterable[str] = None, the segments to receive
             target_table_name: str, the schema qualified table name on the db_alias where the data should be inserted.
                                The table needs to exist.
             target_db_alias: str='dwh', the mara db alias where this data should be inserted
@@ -52,6 +54,7 @@ class DownloadGoogleAnalyticsFlatTable(pipelines.Command):
         self.metrics = metrics
         self.dimensions = dimensions
         self.filters = filters
+        self.segments = segments
         self.target_table_name = target_table_name
         self.target_db_alias = target_db_alias
         self.delimiter_char = '\t'
@@ -72,6 +75,7 @@ class DownloadGoogleAnalyticsFlatTable(pipelines.Command):
         return (ga_downloader_shell_command(self.view_id, self.start_date, self.end_date,
                                             self.metrics,dimensions=self.dimensions,
                                             filters=self.filters,
+                                            segments=self.segments,
                                             delimiter_char=self.delimiter_char,
                                             add_view_id_column=self.add_view_id_column,
                                             use_flask_command=self.use_flask_command,
@@ -91,6 +95,7 @@ class DownloadGoogleAnalyticsFlatTable(pipelines.Command):
             ('metrics', _.pre[escape(', '.join(self.metrics))]),
             ('dimensions', _.pre[escape(', '.join(self.dimensions if self.dimensions else []))]),
             ('filters', _.pre[escape(self.filters)] if self.filters else None),
+            ('segments', _.pre[escape(', '.join(self.segments if self.segments else []))]),
             ('add view id column', _.pre[str(self.add_view_id_column)]),
             ('target table name', _.pre[escape(self.target_table_name)]),
             ('target db', _.pre[escape(self.target_db_alias)]),
@@ -118,6 +123,7 @@ def ga_downloader_shell_command(view_id: int,
                                 metrics: t.Iterable[str],
                                 dimensions: t.Iterable[str] = None,
                                 filters: str = None,
+                                segments: t.Iterable[str] = None,
                                 delimiter_char: str = '\t',
                                 add_view_id_column: bool = False,
                                 use_flask_command: bool = True,
@@ -133,6 +139,7 @@ def ga_downloader_shell_command(view_id: int,
         metrics: t.Iterable[str], the metrics to receive
         dimensions: t.Iterable[str] = None, the dimensions to receive
         filters: str=None, a filter string to be used in the query
+        segments: t.Iterable[str] = None, the segments to receive
         delimiter_char: str='\t', a character that delimits the output fields.
         add_view_id_column: bool=False, adds a new column at the beginning with the view id given in parameter view_id
         use_flask_command: bool=False, if true uses the downloader via flask, which needs an import in the flask app path
@@ -144,6 +151,7 @@ def ga_downloader_shell_command(view_id: int,
 
     metrics_param = ','.join(metrics) if metrics else None
     dimensions_param = ','.join(dimensions) if dimensions else None
+    segments_param = ','.join(segments) if segments else None
 
     command = []
     command.extend([
@@ -156,6 +164,7 @@ def ga_downloader_shell_command(view_id: int,
         f" --end-date='{end_date}'",
         f' --metrics={metrics_param}',
         f' --dimensions={dimensions_param}',
+        f' --segments={segments_param}' if segments_param else '',
         f" --delimiter-char='{delimiter_char}'",
         f' --fail-on-no-data' if fail_on_no_data else f' --no-fail-on-no-data'
     ])

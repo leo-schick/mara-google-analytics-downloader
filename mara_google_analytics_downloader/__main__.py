@@ -9,7 +9,6 @@ Mainly to be used with mara to import a Google Analytics to a database table.
 
 import click
 import sys
-import random
 import typing as t
 import time
 
@@ -66,6 +65,8 @@ def detect_api(metrics: t.List[str], dimensions: t.List[str]) -> str:
               required=True)
 @click.option('--filters', help='A filter to be used in the request',
               required=False)
+@click.option('--segments', help='A comma-separated list of segments to be used in the request',
+              required=False)
 @click.option('--service-account-private-key-id', help='Service Account private_key_id',
               required=False)
 @click.option('--service-account-private-key', help='Service Account private_key',
@@ -98,6 +99,7 @@ def ga_download_to_csv(view_id: int,
                        metrics: str,
                        dimensions: str = None,
                        filters: str = None,
+                       segments: str = None,
                        delimiter_char: str = '\t',
                        add_view_id_column: bool = False,
                        service_account_private_key_id: str = None,
@@ -181,11 +183,19 @@ def ga_download_to_csv(view_id: int,
                         dimensions.split(',')
                     ))
 
+                request_segments = []
+                if segments:
+                    request_segments = list(map(
+                        lambda segment_id: {'segmentId': segment_id},
+                        segments.split(',')
+                    ))
+
                 reportRequest = {
                     'viewId': view_id,
                     'dateRanges': [{'startDate': start_date, 'endDate': end_date}],
                     'metrics': request_metrics,
                     'dimensions': reuqest_dimensions,
+                    'segments': request_segments,
                     'pageToken': page_token
                 }
 
@@ -210,6 +220,9 @@ def ga_download_to_csv(view_id: int,
             elif api == 'mcf':
                 # Builds the google analytics service object
                 analytics = build('analytics', 'v3', credentials=credentials, cache_discovery=False)
+
+                if segments:
+                    raise ValueError("The Multi-Channel Funnels Reporting API does not support parameter 'segments'")
 
                 request = analytics.data().mcf().get(
                     ids=f'ga:{view_id}',
